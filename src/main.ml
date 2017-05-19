@@ -49,7 +49,10 @@ let msat =
 (* minisat (minisat) *)
 let minisat simpl =
   let name = Format.sprintf "minisat%s" (if simpl then " (simpl)" else "") in
-  let pre clauses = List.map (List.map Minisat.Lit.make) clauses in
+  let make i =
+    if i < 0 then Minisat.Lit.neg @@ Minisat.Lit.make ~-i else Minisat.Lit.make i
+  in
+  let pre clauses = List.map (List.map make) clauses in
   let solve clauses =
     let state = Minisat.create () in
     try
