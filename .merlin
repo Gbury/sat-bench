@@ -8,4 +8,5 @@ PKG sattools.minisat
 PKG sattools.cryptominisat
 
 PKG oclock
-
+PKG dolmen
+PKG printbox

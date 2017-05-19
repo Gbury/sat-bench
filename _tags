@@ -1,0 +1,18 @@
+
+true: color(always)
+
+#includes
+<src>: include
+
+# Some warnings
+<**/*.ml>: warn_K, warn_Y, warn_X, warn(-58)
+<**/*.cm*>: debug
+
+# Package dependencies
+<**/*>: package(dolmen), package(oclock), package(printbox),  \
+        package(msat), package(minisat), package(unix)
+
+#        package(sattools),                                    \
+#        package(sattools.minisat),                            \
+#        package(sattools.cryptominisat)
+
