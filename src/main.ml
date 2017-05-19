@@ -166,21 +166,31 @@ let mk_grid lines columns f =
       Array.init columns (fun j -> f (i, j)))
 
 let pp_res out l =
-  let g = mk_grid (1 + List.length l) 3 (function
+  let g = mk_grid (1 + List.length l) 4 (function
       | (0, 0) -> PrintBox.text "solver"
-      | (0, 1) -> PrintBox.text "CPU time"
-      | (0, 2) -> PrintBox.text "Realtime"
+      | (0, 1) -> PrintBox.text "status"
+      | (0, 2) -> PrintBox.text "CPU time"
+      | (0, 3) -> PrintBox.text "Realtime"
       | (i, 0) ->
         let { solver = S s; _ } = List.nth l (i - 1) in
         PrintBox.sprintf "%s (%s)" s.name s.package
       | (i, 1) ->
         let r = List.nth l (i - 1) in
-        let f = Int64.to_float r.cpu_time /. (10. ** 9.) in
-        PrintBox.sprintf "%.2f" f
+        begin match r.status with
+          | Ok Sat -> PrintBox.sprintf "sat"
+          | Ok Unsat -> PrintBox.sprintf "unsat"
+          | Ok Memory -> PrintBox.sprintf "memory"
+          | Ok Timeout -> PrintBox.sprintf "timeout"
+          | Error _ -> PrintBox.sprintf "exn"
+        end
       | (i, 2) ->
         let r = List.nth l (i - 1) in
+        let f = Int64.to_float r.cpu_time /. (10. ** 9.) in
+        PrintBox.sprintf "%.3f" f
+      | (i, 3) ->
+        let r = List.nth l (i - 1) in
         let f = Int64.to_float r.realtime /. (10. ** 9.) in
-        PrintBox.sprintf "%.2f" f
+        PrintBox.sprintf "%.3f" f
       | _ -> assert false
     ) in
   let g' = PrintBox.grid ~pad:(PrintBox.hpad 1) ~bars:true g in
@@ -225,7 +235,7 @@ let () =
     let file = Sys.argv.(1) in
     let l = P.parse_file file in
     let input = filter_map (fun x -> x) [] l in
-    let res = List.map (call ~timeout:30. ~memory:1_000_000_000. input) solver_list in
+    let res = List.map (call ~timeout:600. ~memory:1_000_000_000. input) solver_list in
     pp_res stdout res
   end
 
