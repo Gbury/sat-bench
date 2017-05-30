@@ -212,6 +212,7 @@ module P = Dolmen.Dimacs.Make
 
 let s_msat = S msat
 let s_minisat = S (minisat false)
+let s_minisat_simpl = S (minisat true)
 let s_sattools_mini = S (sattools "minisat" "mini")
 let s_sattools_crypto = S (sattools "cryptominisat" "crypto")
 
@@ -221,6 +222,7 @@ let solver_list = ref []
 let set_solver_list = function
   | "msat" -> solver_list := [ s_msat ]
   | "minisat" -> solver_list := [ s_minisat ]
+  | "minisat_s" -> solver_list := [ s_minisat_simpl ]
   | "mini" -> solver_list := [ s_sattools_mini ]
   | "crypto" -> solver_list := [ s_sattools_crypto ]
   | "all" -> solver_list := [ s_msat; s_minisat; s_sattools_mini; s_sattools_crypto]
