@@ -1,0 +1,61 @@
+
+Processing file 'problems/pigeon/hole6.cnf': parsing... solving..
+
+  solver                   | status | CPU time | Realtime
+ --------------------------+--------+----------+----------
+  msat (mSAT)              | unsat  | 0.012    | 0.012
+ --------------------------+--------+----------+----------
+  minisat (minisat)        | unsat  | 0.004    | 0.004
+ --------------------------+--------+----------+----------
+  minisat (sattools)       | unsat  | 0.005    | 0.005
+ --------------------------+--------+----------+----------
+  cryptominisat (sattools) | unsat  | 0.004    | 0.004
+
+Processing file 'problems/pigeon/hole7.cnf': parsing... solving..
+
+  solver                   | status | CPU time | Realtime
+ --------------------------+--------+----------+----------
+  msat (mSAT)              | unsat  | 0.164    | 0.164
+ --------------------------+--------+----------+----------
+  minisat (minisat)        | unsat  | 0.012    | 0.012
+ --------------------------+--------+----------+----------
+  minisat (sattools)       | unsat  | 0.034    | 0.034
+ --------------------------+--------+----------+----------
+  cryptominisat (sattools) | unsat  | 0.059    | 0.059
+
+Processing file 'problems/pigeon/hole8.cnf': parsing... solving..
+
+  solver                   | status | CPU time | Realtime
+ --------------------------+--------+----------+----------
+  msat (mSAT)              | unsat  | 0.826    | 0.826
+ --------------------------+--------+----------+----------
+  minisat (minisat)        | unsat  | 0.075    | 0.075
+ --------------------------+--------+----------+----------
+  minisat (sattools)       | unsat  | 0.174    | 0.174
+ --------------------------+--------+----------+----------
+  cryptominisat (sattools) | unsat  | 2.028    | 2.029
+
+Processing file 'problems/pigeon/hole9.cnf': parsing... solving..
+
+  solver                   | status | CPU time | Realtime
+ --------------------------+--------+----------+----------
+  msat (mSAT)              | unsat  | 7.836    | 7.836
+ --------------------------+--------+----------+----------
+  minisat (minisat)        | unsat  | 0.492    | 0.492
+ --------------------------+--------+----------+----------
+  minisat (sattools)       | unsat  | 1.797    | 1.797
+ --------------------------+--------+----------+----------
+  cryptominisat (sattools) | unsat  | 3.318    | 3.318
+
+Processing file 'problems/pigeon/hole10.cnf': parsing... solving..
+
+  solver                   | status | CPU time | Realtime
+ --------------------------+--------+----------+----------
+  msat (mSAT)              | unsat  | 158.765  | 158.767
+ --------------------------+--------+----------+----------
+  minisat (minisat)        | unsat  | 7.525    | 7.525
+ --------------------------+--------+----------+----------
+  minisat (sattools)       | unsat  | 125.789  | 125.790
+ --------------------------+--------+----------+----------
+  cryptominisat (sattools) | unsat  | 60.274   | 60.275
+
