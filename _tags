@@ -10,9 +10,8 @@ true: color(always)
 
 # Package dependencies
 <**/*>: package(dolmen), package(oclock), package(printbox),  \
-        package(msat), package(minisat), package(unix)
-
-#        package(sattools),                                    \
-#        package(sattools.minisat),                            \
-#        package(sattools.cryptominisat)
+        package(msat), package(minisat), package(unix),       \
+        package(sattools),                                    \
+        package(sattools-minisat),                            \
+        package(sattools-cryptominisat)
 

@@ -4,8 +4,8 @@ B _build/src
 PKG msat
 PKG minisat
 PKG sattools
-PKG sattools.minisat
-PKG sattools.cryptominisat
+PKG sattools-minisat
+PKG sattools-cryptominisat
 
 PKG oclock
 PKG dolmen

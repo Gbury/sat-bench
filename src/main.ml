@@ -67,8 +67,7 @@ let minisat simpl =
     name; pre; solve;
   }
 
-(*
-(* minisat (sattools) *)
+(* sattools *)
 let sattools solver_name sattools_name =
   let pre clauses = clauses in
   let solve clauses =
@@ -90,7 +89,6 @@ let sattools solver_name sattools_name =
     package = "sattools";
     pre; solve;
   }
-*)
 
 (* Wrapper for timing *)
 (* ************************************************************************ *)
@@ -124,11 +122,10 @@ let () =
     Sys.Signal_handle (fun _ -> raise Out_of_time)
   )
 
-(* We also want to catch user interruptions *)
+(* Raising an exception will only interrupt the current solver, not
+   the whole program, so we disable the raising of the `Break` exception. *)
 let () =
-  Sys.set_signal Sys.sigint (
-    Sys.Signal_handle (fun _ -> raise Sigint)
-  )
+  Sys.catch_break false
 
 let realtime () =
   Oclock.gettime Oclock.realtime
@@ -213,12 +210,30 @@ module P = Dolmen.Dimacs.Make
       let clause ?loc l = Some l
     end)
 
-let solver_list = [
-  S msat;
-  S (minisat false);
-  (* S (sattools "minisat" "mini"); *)
-  (* S (sattools "cryptominisat" "cryptominisat"); *)
+let s_msat = S msat
+let s_minisat = S (minisat false)
+let s_sattools_mini = S (sattools "minisat" "mini")
+let s_sattools_crypto = S (sattools "cryptominisat" "crypto")
+
+let file_list = ref []
+let solver_list = ref []
+
+let set_solver_list = function
+  | "msat" -> solver_list := [ s_msat ]
+  | "minisat" -> solver_list := [ s_minisat ]
+  | "mini" -> solver_list := [ s_sattools_mini ]
+  | "crypto" -> solver_list := [ s_sattools_crypto ]
+  | "all" -> solver_list := [ s_msat; s_minisat; s_sattools_mini; s_sattools_crypto]
+  | _ -> assert false
+
+let args = [
+  "-s", Arg.String set_solver_list, " set solver(s) to use (available: all, msat, minisat, mini, crypto)";
 ]
+
+let anon file =
+  file_list := file :: !file_list
+
+let usage = "./sat-bench [-s solver] file [file [file [...]]]"
 
 let rec filter_map f acc = function
   | [] -> List.rev acc
@@ -229,13 +244,20 @@ let rec filter_map f acc = function
     end
 
 let () =
-  if Array.length Sys.argv < 2 then
-    Format.printf "An input file is required@."
-  else begin
-    let file = Sys.argv.(1) in
-    let l = P.parse_file file in
-    let input = filter_map (fun x -> x) [] l in
-    let res = List.map (call ~timeout:600. ~memory:1_000_000_000. input) solver_list in
-    pp_res stdout res
-  end
+  let () = Arg.parse args anon usage in
+  if !file_list = [] then (
+    Format.printf "ERROR: empty file list";
+    exit 1
+  ) else if !solver_list = [] then (
+    Format.printf "ERROR: empty solver list";
+    exit 1
+  ) else
+    List.iter (fun file ->
+        Format.printf "@\nProcessing file '%s': parsing...@?" file;
+        let l = P.parse_file file in
+        Format.printf " solving..@\n@.";
+        let input = filter_map (fun x -> x) [] l in
+        let res = List.map (call ~timeout:600. ~memory:1_000_000_000. input) !solver_list in
+        pp_res stdout res
+      ) !file_list
 
