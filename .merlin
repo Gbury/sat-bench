@@ -6,6 +6,7 @@ PKG minisat
 PKG sattools
 PKG sattools-minisat
 PKG sattools-cryptominisat
+PKG ocaml-sat-solvers
 
 PKG oclock
 PKG dolmen

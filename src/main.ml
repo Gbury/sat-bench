@@ -2,9 +2,9 @@
 (* Types for solvers *)
 (* ************************************************************************ *)
 
-exception Sigint
 exception Out_of_time
 exception Out_of_space
+exception Failure of string
 
 type status =
   | Sat
@@ -87,6 +87,28 @@ let sattools solver_name sattools_name =
   in {
     name = solver_name;
     package = "sattools";
+    pre; solve;
+  }
+
+(* ocaml-sat-solvers *)
+let ocaml_sat_solvers solver_name =
+  let pre clauses = List.map Array.of_list clauses in
+  let solve clauses =
+    let f = Satsolvers.find_solver solver_name in
+    let s = f#new_instance in
+    let () = List.iter s#add_clause clauses in
+    let res = match s#solve with
+      | Satwrapper.SolveSatisfiable -> Sat
+      | Satwrapper.SolveUnsatisfiable -> Unsat
+      | Satwrapper.SolveFailure msg ->
+        let () = s#dispose in
+        raise (Failure msg)
+    in
+    let () = s#dispose in
+    res
+  in {
+    name = solver_name;
+    package = "ocaml-sat-solvers";
     pre; solve;
   }
 
@@ -210,26 +232,24 @@ module P = Dolmen.Dimacs.Make
       let clause ?loc l = Some l
     end)
 
-let s_msat = S msat
-let s_minisat = S (minisat false)
-let s_minisat_simpl = S (minisat true)
-let s_sattools_mini = S (sattools "minisat" "mini")
-let s_sattools_crypto = S (sattools "cryptominisat" "crypto")
+let solver_list = [
+  S msat;
+  S (minisat false);
+  S (ocaml_sat_solvers "minisat");
+  S (sattools "minisat" "mini");
+  S (sattools "cryptominisat" "crypto");
+  ]
 
 let file_list = ref []
-let solver_list = ref []
+let name_list = ref []
+let package_list = ref []
 
-let set_solver_list = function
-  | "msat" -> solver_list := [ s_msat ]
-  | "minisat" -> solver_list := [ s_minisat ]
-  | "minisat_s" -> solver_list := [ s_minisat_simpl ]
-  | "mini" -> solver_list := [ s_sattools_mini ]
-  | "crypto" -> solver_list := [ s_sattools_crypto ]
-  | "all" -> solver_list := [ s_msat; s_minisat; s_sattools_mini; s_sattools_crypto]
-  | _ -> assert false
+let add_solver_name s = name_list := s :: !name_list
+let add_package_name s = package_list := s :: !package_list
 
 let args = [
-  "-s", Arg.String set_solver_list, " set solver(s) to use (available: all, msat, minisat, mini, crypto)";
+  "-s", Arg.String add_solver_name, " filter the solvers to use by name";
+  "-p", Arg.String add_package_name, " filter the solvers to use by package";
 ]
 
 let anon file =
@@ -245,21 +265,25 @@ let rec filter_map f acc = function
       | Some y -> filter_map f (y :: acc) r
     end
 
+let mem s l =
+  if l = [] then true
+  else List.mem s l
+
 let () =
   let () = Arg.parse args anon usage in
   if !file_list = [] then (
     Format.printf "ERROR: empty file list";
     exit 1
-  ) else if !solver_list = [] then (
-    Format.printf "ERROR: empty solver list";
-    exit 1
   ) else
+    let solvers = List.filter (fun (S s) ->
+        mem s.name !name_list || mem s.package !package_list
+      ) solver_list in
     List.iter (fun file ->
         Format.printf "@\nProcessing file '%s': parsing...@?" file;
         let l = P.parse_file file in
         Format.printf " solving..@\n@.";
         let input = filter_map (fun x -> x) [] l in
-        let res = List.map (call ~timeout:600. ~memory:1_000_000_000. input) !solver_list in
+        let res = List.map (call ~timeout:600. ~memory:1_000_000_000. input) solvers in
         pp_res stdout res
       ) !file_list
 

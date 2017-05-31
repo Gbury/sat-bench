@@ -13,5 +13,6 @@ true: color(always)
         package(msat), package(minisat), package(unix),       \
         package(sattools),                                    \
         package(sattools-minisat),                            \
-        package(sattools-cryptominisat)
+        package(sattools-cryptominisat),                      \
+        package(ocaml-sat-solvers)
 
