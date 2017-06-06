@@ -10,6 +10,9 @@ all: bin
 bin:
 	$(COMP) $(FLAGS) $(BIN)
 
+bench: bin
+	./$(BIN) problems/pigeon/hole{9,8,7,6}.cnf
+
 clean:
 	$(COMP) -clean
 
