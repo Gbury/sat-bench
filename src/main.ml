@@ -46,6 +46,43 @@ let msat =
     pre; solve;
   }
 
+(* aez *)
+let aez =
+  let () = Aez.Smt.set_cc false in
+  let pred = Aez.Hstring.make "p" in
+  let () = Aez.Smt.Symbol.declare pred [ Aez.Smt.Type.type_int ] Aez.Smt.Type.type_bool in
+  let mk_abs i =
+    assert (i > 0);
+    Aez.Smt.Term.make_app pred [ Aez.Smt.Term.make_int (Num.Int i) ]
+  in
+  let mk_pred i =
+    assert (i <> 0);
+    let t = mk_abs (abs i) in
+    let t' = if i > 0 then Aez.Smt.Term.t_true else Aez.Smt.Term.t_false in
+    Aez.Smt.Formula.(make_lit Eq [t; t'])
+  in
+  let mk_clause l =
+    let l' = List.map mk_pred l in
+    Aez.Smt.Formula.(make Or l')
+  in
+  let pre l =
+    let l' = List.map mk_clause l in
+    Aez.Smt.Formula.(make And l')
+  in
+  let solve clauses =
+    let module M = Aez.Smt.Make() in
+    try
+      let () = M.assume ~id:0 clauses in
+      let () = M.check () in
+      Sat
+    with Aez.Smt.Unsat _ ->
+      Unsat
+  in {
+    name = "aez";
+    package = "aez";
+    pre; solve;
+  }
+
 (* minisat (minisat) *)
 let minisat simpl =
   let name = Format.sprintf "minisat%s" (if simpl then " (simpl)" else "") in
@@ -233,6 +270,7 @@ module P = Dolmen.Dimacs.Make
     end)
 
 let solver_list = [
+  S aez;
   S msat;
   S (minisat false);
   S (ocaml_sat_solvers "minisat");

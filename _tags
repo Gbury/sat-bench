@@ -14,5 +14,6 @@ true: color(always)
         package(sattools),                                    \
         package(sattools-minisat),                            \
         package(sattools-cryptominisat),                      \
-        package(ocaml-sat-solvers)
+        package(ocaml-sat-solvers),                           \
+        package(aez)
 

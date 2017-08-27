@@ -1,6 +1,7 @@
 S src/
 B _build/src
 
+PKG aez
 PKG msat
 PKG minisat
 PKG sattools
