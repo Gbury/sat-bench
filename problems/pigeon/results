@@ -3,68 +3,78 @@ Processing file 'problems/pigeon/hole6.cnf': parsing... solving..
 
   solver                      | status | CPU time | Realtime
  -----------------------------+--------+----------+----------
-  msat (mSAT)                 | unsat  | 0.027    | 0.027
+  aez (aez)                   | unsat  | 0.120    | 0.120
  -----------------------------+--------+----------+----------
-  minisat (minisat)           | unsat  | 0.007    | 0.007
+  msat (mSAT)                 | unsat  | 0.018    | 0.018
  -----------------------------+--------+----------+----------
-  minisat (ocaml-sat-solvers) | unsat  | 0.008    | 0.008
+  minisat (minisat)           | unsat  | 0.006    | 0.006
  -----------------------------+--------+----------+----------
-  minisat (sattools)          | unsat  | 0.012    | 0.012
+  minisat (ocaml-sat-solvers) | unsat  | 0.006    | 0.006
  -----------------------------+--------+----------+----------
-  cryptominisat (sattools)    | unsat  | 0.007    | 0.007
+  minisat (sattools)          | unsat  | 0.008    | 0.008
+ -----------------------------+--------+----------+----------
+  cryptominisat (sattools)    | unsat  | 0.006    | 0.006
 
 Processing file 'problems/pigeon/hole7.cnf': parsing... solving..
 
   solver                      | status | CPU time | Realtime
  -----------------------------+--------+----------+----------
-  msat (mSAT)                 | unsat  | 0.249    | 0.249
+  aez (aez)                   | unsat  | 4.257    | 4.258
+ -----------------------------+--------+----------+----------
+  msat (mSAT)                 | unsat  | 0.213    | 0.213
  -----------------------------+--------+----------+----------
   minisat (minisat)           | unsat  | 0.015    | 0.015
  -----------------------------+--------+----------+----------
   minisat (ocaml-sat-solvers) | unsat  | 0.015    | 0.015
  -----------------------------+--------+----------+----------
-  minisat (sattools)          | unsat  | 0.044    | 0.044
+  minisat (sattools)          | unsat  | 0.043    | 0.043
  -----------------------------+--------+----------+----------
-  cryptominisat (sattools)    | unsat  | 0.074    | 0.074
+  cryptominisat (sattools)    | unsat  | 0.073    | 0.073
 
 Processing file 'problems/pigeon/hole8.cnf': parsing... solving..
 
   solver                      | status | CPU time | Realtime
  -----------------------------+--------+----------+----------
-  msat (mSAT)                 | unsat  | 1.102    | 1.102
+  aez (aez)                   | unsat  | 31.450   | 31.458
  -----------------------------+--------+----------+----------
-  minisat (minisat)           | unsat  | 0.099    | 0.099
+  msat (mSAT)                 | unsat  | 0.941    | 0.942
  -----------------------------+--------+----------+----------
-  minisat (ocaml-sat-solvers) | unsat  | 0.096    | 0.096
+  minisat (minisat)           | unsat  | 0.096    | 0.096
  -----------------------------+--------+----------+----------
-  minisat (sattools)          | unsat  | 0.221    | 0.221
+  minisat (ocaml-sat-solvers) | unsat  | 0.098    | 0.098
  -----------------------------+--------+----------+----------
-  cryptominisat (sattools)    | unsat  | 2.660    | 2.659
+  minisat (sattools)          | unsat  | 0.217    | 0.217
+ -----------------------------+--------+----------+----------
+  cryptominisat (sattools)    | unsat  | 2.488    | 2.489
 
 Processing file 'problems/pigeon/hole9.cnf': parsing... solving..
 
-  solver                      | status | CPU time | Realtime
- -----------------------------+--------+----------+----------
-  msat (mSAT)                 | unsat  | 12.450   | 12.450
- -----------------------------+--------+----------+----------
-  minisat (minisat)           | unsat  | 0.649    | 0.649
- -----------------------------+--------+----------+----------
-  minisat (ocaml-sat-solvers) | unsat  | 0.647    | 0.647
- -----------------------------+--------+----------+----------
-  minisat (sattools)          | unsat  | 2.320    | 2.320
- -----------------------------+--------+----------+----------
-  cryptominisat (sattools)    | unsat  | 4.431    | 4.431
+  solver                      | status  | CPU time | Realtime
+ -----------------------------+---------+----------+----------
+  aez (aez)                   | timeout | 600.024  | 600.001
+ -----------------------------+---------+----------+----------
+  msat (mSAT)                 | unsat   | 8.886    | 8.886
+ -----------------------------+---------+----------+----------
+  minisat (minisat)           | unsat   | 0.634    | 0.634
+ -----------------------------+---------+----------+----------
+  minisat (ocaml-sat-solvers) | unsat   | 0.627    | 0.627
+ -----------------------------+---------+----------+----------
+  minisat (sattools)          | unsat   | 2.304    | 2.304
+ -----------------------------+---------+----------+----------
+  cryptominisat (sattools)    | unsat   | 4.075    | 4.075
 
 Processing file 'problems/pigeon/hole10.cnf': parsing... solving..
 
-  solver                      | status | CPU time | Realtime
- -----------------------------+--------+----------+----------
-  msat (mSAT)                 | unsat  | 180.617  | 180.705
- -----------------------------+--------+----------+----------
-  minisat (minisat)           | unsat  | 9.553    | 9.553
- -----------------------------+--------+----------+----------
-  minisat (ocaml-sat-solvers) | unsat  | 9.674    | 9.673
- -----------------------------+--------+----------+----------
-  minisat (sattools)          | unsat  | 156.228  | 156.214
- -----------------------------+--------+----------+----------
-  cryptominisat (sattools)    | unsat  | 77.969   | 77.963
+  solver                      | status  | CPU time | Realtime
+ -----------------------------+---------+----------+----------
+  aez (aez)                   | timeout | 600.084  | 600.051
+ -----------------------------+---------+----------+----------
+  msat (mSAT)                 | unsat   | 161.478  | 161.469
+ -----------------------------+---------+----------+----------
+  minisat (minisat)           | unsat   | 9.579    | 9.578
+ -----------------------------+---------+----------+----------
+  minisat (ocaml-sat-solvers) | unsat   | 9.499    | 9.498
+ -----------------------------+---------+----------+----------
+  minisat (sattools)          | unsat   | 160.376  | 160.366
+ -----------------------------+---------+----------+----------
+  cryptominisat (sattools)    | unsat   | 72.050   | 72.046
