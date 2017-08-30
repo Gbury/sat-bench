@@ -221,7 +221,10 @@ let mk_grid lines columns f =
   Array.init lines (fun i ->
       Array.init columns (fun j -> f (i, j)))
 
-let pp_res out l =
+let pp_full out r =
+  ()
+
+let pp_res ~full out l =
   let g = mk_grid (1 + List.length l) 4 (function
       | (0, 0) -> PrintBox.text "solver"
       | (0, 1) -> PrintBox.text "status"
@@ -237,7 +240,9 @@ let pp_res out l =
           | Ok Unsat -> PrintBox.sprintf "unsat"
           | Ok Memory -> PrintBox.sprintf "memory"
           | Ok Timeout -> PrintBox.sprintf "timeout"
-          | Error _ -> PrintBox.sprintf "exn"
+          | Error exn ->
+            PrintBox.sprintf "%s"
+              (if full then (Printexc.to_string exn) else "exn")
         end
       | (i, 2) ->
         let r = List.nth l (i - 1) in
@@ -281,6 +286,7 @@ let solver_list = [
 let file_list = ref []
 let name_list = ref []
 let package_list = ref []
+let full_output = ref false
 
 let add_solver_name s = name_list := s :: !name_list
 let add_package_name s = package_list := s :: !package_list
@@ -288,6 +294,7 @@ let add_package_name s = package_list := s :: !package_list
 let args = [
   "-s", Arg.String add_solver_name, " filter the solvers to use by name";
   "-p", Arg.String add_package_name, " filter the solvers to use by package";
+  "-f", Arg.Set full_output, " output full exception information";
 ]
 
 let anon file =
@@ -309,10 +316,10 @@ let mem s l =
 
 let () =
   let () = Arg.parse args anon usage in
-  if !file_list = [] then (
+  if !file_list = [] then begin
     Format.printf "ERROR: empty file list";
     exit 1
-  ) else
+  end else begin
     let solvers = List.filter (fun (S s) ->
         mem s.name !name_list || mem s.package !package_list
       ) solver_list in
@@ -322,6 +329,6 @@ let () =
         Format.printf " solving..@\n@.";
         let input = filter_map (fun x -> x) [] l in
         let res = List.map (call ~timeout:600. ~memory:1_000_000_000. input) solvers in
-        pp_res stdout res
+        pp_res ~full:!full_output stdout res
       ) !file_list
-
+  end
