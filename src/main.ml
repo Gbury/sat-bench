@@ -28,12 +28,17 @@ type 'a res = {
   realtime : int64;
 }
 
+(* Convenience functions *)
+(* ************************************************************************ *)
+
+let map f l = List.rev @@ List.rev_map f l
+
 (* Sat solvers *)
 (* ************************************************************************ *)
 
 (* mSAT *)
 let msat =
-  let pre clauses = List.map (List.map Msat.Sat.Expr.make) clauses in
+  let pre clauses = map (map Msat.Sat.Expr.make) clauses in
   let solve clauses =
     let module M = Msat.Sat.Make () in
     let () = M.assume clauses in
@@ -62,11 +67,11 @@ let aez =
     Aez.Smt.Formula.(make_lit Eq [t; t'])
   in
   let mk_clause l =
-    let l' = List.map mk_pred l in
+    let l' = map mk_pred l in
     Aez.Smt.Formula.(make Or l')
   in
   let pre l =
-    let l' = List.map mk_clause l in
+    let l' = map mk_clause l in
     Aez.Smt.Formula.(make And l')
   in
   let solve clauses =
@@ -89,7 +94,7 @@ let minisat simpl =
   let make i =
     if i < 0 then Minisat.Lit.neg @@ Minisat.Lit.make ~-i else Minisat.Lit.make i
   in
-  let pre clauses = List.map (List.map make) clauses in
+  let pre clauses = map (map make) clauses in
   let solve clauses =
     let state = Minisat.create () in
     try
@@ -129,7 +134,7 @@ let sattools solver_name sattools_name =
 
 (* ocaml-sat-solvers *)
 let ocaml_sat_solvers solver_name =
-  let pre clauses = List.map Array.of_list clauses in
+  let pre clauses = map Array.of_list clauses in
   let solve clauses =
     let f = Satsolvers.find_solver solver_name in
     let s = f#new_instance in
@@ -321,7 +326,7 @@ let () =
     exit 1
   end else begin
     let solvers = List.filter (fun (S s) ->
-        mem s.name !name_list || mem s.package !package_list
+        mem s.name !name_list && mem s.package !package_list
       ) solver_list in
     List.iter (fun file ->
         Format.printf "@\nProcessing file '%s': parsing...@?" file;
