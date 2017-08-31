@@ -199,7 +199,7 @@ let cpu_time () =
   | None -> 0L
   | Some clock -> Oclock.gettime clock
 
-let call ~timeout ~memory input (S solver) =
+let call ~timeout ~memory input ((S solver) as s) =
   let clauses = solver.pre input in
   let realstart = realtime () in
   let cpu_start = cpu_time () in
@@ -213,7 +213,7 @@ let call ~timeout ~memory input (S solver) =
   in
   let () = delete_alarm al in
   Gc.major ();
-  { solver = (S solver); status;
+  { solver = s; status;
     cpu_time = Int64.sub (cpu_time()) cpu_start;
     realtime = Int64.sub (realtime()) realstart;
   }
@@ -263,6 +263,30 @@ let pp_res ~full out l =
   let () = PrintBox_text.output ~indent:1 out g' in
   Printf.fprintf out "\n%!"
 
+(* Aggregating results *)
+(* ************************************************************************ *)
+
+let mean l =
+  let n = ref @@ List.length l in
+  let sum = List.fold_left (fun (last_file, acc) (cur_file, cur) ->
+      if not (List.for_all2 (fun r r' -> r.status = r'.status) acc cur) then
+        (Printf.printf "Ignoring file %s (different status)\n%a\n" cur_file (pp_res ~full:false) cur;
+         decr n; (last_file, acc))
+      else
+        let res = List.map2 (fun r r' ->
+            assert (r.solver == r'.solver);
+            { solver = r.solver;
+              status = r.status;
+              cpu_time = Int64.add r.cpu_time r'.cpu_time;
+              realtime = Int64.add r.realtime r'.realtime;
+            }) acc cur in
+        cur_file, res
+    ) (List.hd l) (List.tl l) in
+  List.map (fun r ->
+      { r with cpu_time = Int64.div r.cpu_time (Int64.of_int !n);
+               realtime = Int64.div r.realtime (Int64.of_int !n);
+      }) (snd sum)
+
 
 (* Parsing *)
 (* ************************************************************************ *)
@@ -286,17 +310,19 @@ let solver_list = [
   S (ocaml_sat_solvers "minisat");
   S (sattools "minisat" "mini");
   S (sattools "cryptominisat" "crypto");
-  ]
+]
 
 let file_list = ref []
 let name_list = ref []
 let package_list = ref []
+let aggregate = ref false
 let full_output = ref false
 
 let add_solver_name s = name_list := s :: !name_list
 let add_package_name s = package_list := s :: !package_list
 
 let args = [
+  "-a", Arg.Set aggregate, " agregate all results into one";
   "-s", Arg.String add_solver_name, " filter the solvers to use by name";
   "-p", Arg.String add_package_name, " filter the solvers to use by package";
   "-f", Arg.Set full_output, " output full exception information";
@@ -328,12 +354,15 @@ let () =
     let solvers = List.filter (fun (S s) ->
         mem s.name !name_list && mem s.package !package_list
       ) solver_list in
-    List.iter (fun file ->
+    let l = List.map (fun file ->
         Format.printf "@\nProcessing file '%s': parsing...@?" file;
         let l = P.parse_file file in
         Format.printf " solving..@\n@.";
         let input = filter_map (fun x -> x) [] l in
         let res = List.map (call ~timeout:600. ~memory:1_000_000_000. input) solvers in
-        pp_res ~full:!full_output stdout res
-      ) !file_list
+        pp_res ~full:!full_output stdout res;
+        file, res) !file_list
+    in
+    if !aggregate then
+      pp_res ~full:!full_output stdout (mean l)
   end
