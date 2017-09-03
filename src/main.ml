@@ -24,6 +24,7 @@ type solver = S : _ sat -> solver
 type 'a res = {
   solver : solver;
   status : ('a, exn) result;
+  number : int;
   cpu_time : int64;
   realtime : int64;
 }
@@ -213,7 +214,7 @@ let call ~timeout ~memory input ((S solver) as s) =
   in
   let () = delete_alarm al in
   Gc.major ();
-  { solver = s; status;
+  { solver = s; status; number = 1;
     cpu_time = Int64.sub (cpu_time()) cpu_start;
     realtime = Int64.sub (realtime()) realstart;
   }
@@ -230,11 +231,12 @@ let pp_full out r =
   ()
 
 let pp_res ~full out l =
-  let g = mk_grid (1 + List.length l) 4 (function
+  let g = mk_grid (1 + List.length l) 5 (function
       | (0, 0) -> PrintBox.text "solver"
       | (0, 1) -> PrintBox.text "status"
-      | (0, 2) -> PrintBox.text "CPU time"
-      | (0, 3) -> PrintBox.text "Realtime"
+      | (0, 2) -> PrintBox.text "number"
+      | (0, 3) -> PrintBox.text "CPU time"
+      | (0, 4) -> PrintBox.text "Realtime"
       | (i, 0) ->
         let { solver = S s; _ } = List.nth l (i - 1) in
         PrintBox.sprintf "%s (%s)" s.name s.package
@@ -251,9 +253,12 @@ let pp_res ~full out l =
         end
       | (i, 2) ->
         let r = List.nth l (i - 1) in
+        PrintBox.sprintf "%d" r.number
+      | (i, 3) ->
+        let r = List.nth l (i - 1) in
         let f = Int64.to_float r.cpu_time /. (10. ** 9.) in
         PrintBox.sprintf "%.3f" f
-      | (i, 3) ->
+      | (i, 4) ->
         let r = List.nth l (i - 1) in
         let f = Int64.to_float r.realtime /. (10. ** 9.) in
         PrintBox.sprintf "%.3f" f
@@ -266,27 +271,43 @@ let pp_res ~full out l =
 (* Aggregating results *)
 (* ************************************************************************ *)
 
-let mean l =
-  let n = ref @@ List.length l in
-  let sum = List.fold_left (fun (last_file, acc) (cur_file, cur) ->
-      if not (List.for_all2 (fun r r' -> r.status = r'.status) acc cur) then
-        (Printf.printf "Ignoring file %s (different status)\n%a\n" cur_file (pp_res ~full:false) cur;
-         decr n; (last_file, acc))
-      else
-        let res = List.map2 (fun r r' ->
-            assert (r.solver == r'.solver);
-            { solver = r.solver;
-              status = r.status;
-              cpu_time = Int64.add r.cpu_time r'.cpu_time;
-              realtime = Int64.add r.realtime r'.realtime;
-            }) acc cur in
-        cur_file, res
-    ) (List.hd l) (List.tl l) in
-  List.map (fun r ->
-      { r with cpu_time = Int64.div r.cpu_time (Int64.of_int !n);
-               realtime = Int64.div r.realtime (Int64.of_int !n);
-      }) (snd sum)
+exception Dummy
 
+module M = Map.Make(struct
+    type t = (status, unit) result
+    let compare = compare
+  end)
+
+let get_r = function
+  | Ok s -> Ok s
+  | Error _ -> Error ()
+
+let to_r = function
+  | Ok s -> Ok s
+  | Error () -> Error Dummy
+
+let part_s l s =
+  match List.partition (fun (s', _) -> s == s') l with
+  | [] , _ -> M.empty, l
+  | [ _, m ], l' -> m, l'
+  | _ -> assert false
+
+let add_res l r =
+  let m, l' = part_s l r.solver in
+  let t = get_r r.status in
+  let (n, total) = try M.find t m with Not_found -> (0, Int64.of_int 0) in
+  let m' = M.add t (n + 1, Int64.add total r.cpu_time) m in
+  (r.solver, m') :: l'
+
+let mean l =
+  let l' = List.fold_left (fun acc (s, l') ->
+      List.fold_left add_res acc l') [] l in
+  List.flatten @@ List.map (fun (solver, m) ->
+      List.map (fun (status, (number, total)) ->
+          let time = Int64.div total (Int64.of_int number) in
+          { solver; number; status = to_r status;
+            cpu_time = time; realtime = time; })
+        (M.bindings m)) l'
 
 (* Parsing *)
 (* ************************************************************************ *)
@@ -364,5 +385,6 @@ let () =
         file, res) !file_list
     in
     if !aggregate then
-      pp_res ~full:!full_output stdout (mean l)
+      Printf.printf "Aggregate (mean):\n%a" (pp_res ~full:!full_output) (mean l)
   end
+
