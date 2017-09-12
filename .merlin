@@ -8,6 +8,7 @@ PKG sattools
 PKG sattools-minisat
 PKG sattools-cryptominisat
 PKG ocaml-sat-solvers
+PKG mc2.core mc2.dimacs
 
 PKG oclock
 PKG dolmen
