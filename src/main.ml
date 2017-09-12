@@ -52,6 +52,25 @@ let msat =
     pre; solve;
   }
 
+(* mc² *)
+let mc2 =
+  let open Mc2_core in
+  let pre clauses =
+    let solver = Solver.create ~plugins:[Mc2_dimacs.Plugin_sat.plugin] () in
+    let mk_atom = Solver.get_service_exn solver Mc2_dimacs.Plugin_sat.k_atom in
+    solver, map (map mk_atom) clauses
+  in
+  let solve (solver,clauses) =
+    Solver.assume solver clauses;
+    match Solver.solve solver with
+      | Solver.Sat _ -> Sat
+      | Solver.Unsat _ -> Unsat
+  in {
+    name = "mc2";
+    package = "mc2.core, mc2.dimacs";
+    pre; solve;
+  }
+
 (* aez *)
 let aez =
   let () = Aez.Smt.set_cc false in
@@ -327,6 +346,7 @@ module P = Dolmen.Dimacs.Make
 let solver_list = [
   S aez;
   S msat;
+  S mc2;
   S (minisat false);
   S (ocaml_sat_solvers "minisat");
   S (sattools "minisat" "mini");
