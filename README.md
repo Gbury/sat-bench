@@ -1,7 +1,7 @@
 # sat-bench
 A small repo to test and benchmark different sat solvers
 
-# Benchamrking solver
+# Benchmarking solver
 
 ## Building
 
