@@ -1,0 +1,9 @@
+
+(executable
+  (name main)
+  (libraries dolmen oclock printbox msat minisat unix
+             sattools sattools.minisat sattools.cryptominisat
+             ocaml-sat-solvers aez mc2.core mc2.dimacs)
+  (flags :standard -warn-error -a+8 -w -58 -color always)
+  (ocamlopt_flags :standard -O3 -unbox-closures -unbox-closures-factor 20)
+  )
