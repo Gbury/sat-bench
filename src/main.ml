@@ -370,6 +370,7 @@ let name_list = ref []
 let package_list = ref []
 let aggregate = ref false
 let full_output = ref false
+let timeout = ref 600
 
 let add_solver_name s = name_list := s :: !name_list
 let add_package_name s = package_list := s :: !package_list
@@ -379,7 +380,8 @@ let args = [
   "-s", Arg.String add_solver_name, " filter the solvers to use by name";
   "-p", Arg.String add_package_name, " filter the solvers to use by package";
   "-f", Arg.Set full_output, " output full exception information";
-]
+  "-t", Arg.Set_int timeout, " timeout (in seconds)";
+] |> Arg.align
 
 let anon file =
   file_list := file :: !file_list
@@ -404,6 +406,7 @@ let () =
     Format.printf "ERROR: empty file list";
     exit 1
   end else begin
+    let timeout = float_of_int !timeout in
     let solvers = List.filter (fun (S s) ->
         mem s.name !name_list && mem s.package !package_list
       ) solver_list in
@@ -412,7 +415,7 @@ let () =
         let l = P.parse_file file in
         Format.printf " solving..@\n@.";
         let input = filter_map (fun x -> x) [] l in
-        let res = List.map (call ~timeout:600. ~memory:1_000_000_000. input) solvers in
+        let res = List.map (call ~timeout ~memory:1_000_000_000. input) solvers in
         pp_res ~full:!full_output stdout res;
         file, res)
         (List.rev !file_list)
