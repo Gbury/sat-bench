@@ -41,20 +41,23 @@ let map f l = List.rev @@ List.rev_map f l
 (* ************************************************************************ *)
 
 (* mSAT *)
-let msat =
+let mk_msat ~store_proof =
   let module M = Msat_sat in
   let pre clauses = map (map M.Int_lit.make) clauses in
   let solve clauses =
-    let s = M.create ~size:`Big () in
+    let s = M.create ~store_proof ~size:`Big () in
     let () = M.assume s clauses () in
     match M.solve s with
     | M.Sat _ -> Sat
     | M.Unsat _ -> Unsat
   in {
-    name = "msat";
+    name = "msat" ^ (if store_proof then "" else "-no-proof");
     package = "mSAT";
     pre; solve;
   }
+
+let msat = mk_msat ~store_proof:true
+let msat_no_proof = mk_msat ~store_proof:false
 
 (* mc² *)
 let mc2 =
@@ -352,6 +355,7 @@ module P = Dolmen.Dimacs.Make
 let solver_list = [
   S aez;
   S msat;
+  S msat_no_proof;
   S mc2;
   S (minisat false);
   S (ocaml_sat_solvers "minisat");
