@@ -410,7 +410,8 @@ let () =
         let input = filter_map (fun x -> x) [] l in
         let res = List.map (call ~timeout:600. ~memory:1_000_000_000. input) solvers in
         pp_res ~full:!full_output stdout res;
-        file, res) !file_list
+        file, res)
+        (List.rev !file_list)
     in
     if !aggregate then
       Printf.printf "Aggregate (mean):\n%a" (pp_res ~full:!full_output) (mean l)
