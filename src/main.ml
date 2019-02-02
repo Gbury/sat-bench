@@ -6,17 +6,20 @@ exception Out_of_time
 exception Out_of_space
 exception Failure of string
 
-type status =
-  | Sat
-  | Unsat
-  | Memory
-  | Timeout
+module Status = struct
+  type t =
+    | Sat
+    | Unsat
+    | Memory
+    | Timeout
+end
+include Status
 
 type 'a sat = {
   name : string;
   package : string;
   pre : int list list -> 'a;
-  solve : 'a -> status;
+  solve : 'a -> Status.t;
 }
 
 type solver = S : _ sat -> solver
@@ -39,11 +42,12 @@ let map f l = List.rev @@ List.rev_map f l
 
 (* mSAT *)
 let msat =
-  let pre clauses = map (map Msat.Sat.Expr.make) clauses in
+  let module M = Msat_sat in
+  let pre clauses = map (map M.Int_lit.make) clauses in
   let solve clauses =
-    let module M = Msat.Sat.Make () in
-    let () = M.assume clauses in
-    match M.solve () with
+    let s = M.create ~size:`Big () in
+    let () = M.assume s clauses () in
+    match M.solve s with
     | M.Sat _ -> Sat
     | M.Unsat _ -> Unsat
   in {
@@ -63,8 +67,8 @@ let mc2 =
   let solve (solver,clauses) =
     Solver.assume solver clauses;
     match Solver.solve solver with
-      | Solver.Sat _ -> Sat
-      | Solver.Unsat _ -> Unsat
+      | Solver.Sat _ -> Status.Sat
+      | Solver.Unsat _ -> Status.Unsat
   in {
     name = "mc2";
     package = "mc2.core, mc2.dimacs";
@@ -129,6 +133,7 @@ let minisat simpl =
     name; pre; solve;
   }
 
+(*
 (* sattools *)
 let sattools solver_name sattools_name =
   let pre clauses = clauses in
@@ -151,6 +156,7 @@ let sattools solver_name sattools_name =
     package = "sattools";
     pre; solve;
   }
+   *)
 
 (* ocaml-sat-solvers *)
 let ocaml_sat_solvers solver_name =
@@ -293,7 +299,7 @@ let pp_res ~full out l =
 exception Dummy
 
 module M = Map.Make(struct
-    type t = (status, unit) result
+    type t = (Status.t, unit) result
     let compare = compare
   end)
 
@@ -349,8 +355,10 @@ let solver_list = [
   S mc2;
   S (minisat false);
   S (ocaml_sat_solvers "minisat");
+(*
   S (sattools "minisat" "mini");
   S (sattools "cryptominisat" "crypto");
+*)
 ]
 
 let file_list = ref []
