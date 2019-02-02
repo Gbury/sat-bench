@@ -9,10 +9,10 @@ A simple `make` should be enough to build the main test executable.
 
 ## Running benchs
 
-The produced `main.native` executable can be called using:
+The produced `main.exe` executable can be called using:
 
 ```
-./main.native <file>
+./main.exe <file>
 ```
 
 Additionally, it has options to select which provers to run, filtering on
