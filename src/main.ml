@@ -371,6 +371,7 @@ let package_list = ref []
 let aggregate = ref false
 let full_output = ref false
 let timeout = ref 600
+let memory = ref 1000
 
 let add_solver_name s = name_list := s :: !name_list
 let add_package_name s = package_list := s :: !package_list
@@ -381,12 +382,13 @@ let args = [
   "-p", Arg.String add_package_name, " filter the solvers to use by package";
   "-f", Arg.Set full_output, " output full exception information";
   "-t", Arg.Set_int timeout, " timeout (in seconds)";
+  "-m", Arg.Set_int memory, " timeout (in MB)";
 ] |> Arg.align
 
 let anon file =
   file_list := file :: !file_list
 
-let usage = "./sat-bench [-s solver] file [file [file [...]]]"
+let usage = "./sat-bench [-s solver] file+"
 
 let rec filter_map f acc = function
   | [] -> List.rev acc
@@ -407,6 +409,7 @@ let () =
     exit 1
   end else begin
     let timeout = float_of_int !timeout in
+    let memory = float_of_int !memory *. 1_000_000. in
     let solvers = List.filter (fun (S s) ->
         mem s.name !name_list && mem s.package !package_list
       ) solver_list in
@@ -415,7 +418,7 @@ let () =
         let l = P.parse_file file in
         Format.printf " solving..@\n@.";
         let input = filter_map (fun x -> x) [] l in
-        let res = List.map (call ~timeout ~memory:1_000_000_000. input) solvers in
+        let res = List.map (call ~timeout ~memory input) solvers in
         pp_res ~full:!full_output stdout res;
         file, res)
         (List.rev !file_list)
