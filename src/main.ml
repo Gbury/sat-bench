@@ -41,7 +41,8 @@ let map f l = List.rev @@ List.rev_map f l
 (* ************************************************************************ *)
 
 (* mSAT *)
-let mk_msat ~store_proof =
+let mk_msat ~check ~store_proof =
+  assert (not check || store_proof);
   let module M = Msat_sat in
   let pre clauses = map (map M.Int_lit.make) clauses in
   let solve clauses =
@@ -49,15 +50,18 @@ let mk_msat ~store_proof =
     let () = M.assume s clauses () in
     match M.solve s with
     | M.Sat _ -> Sat
-    | M.Unsat _ -> Unsat
+    | M.Unsat us ->
+      if check then M.Proof.check @@ us.Msat.get_proof();
+      Unsat
   in {
-    name = "msat" ^ (if store_proof then "" else "-no-proof");
+    name = "msat" ^ (if check then "-check" else if store_proof then "" else "-no-proof");
     package = "mSAT";
     pre; solve;
   }
 
-let msat = mk_msat ~store_proof:true
-let msat_no_proof = mk_msat ~store_proof:false
+let msat = mk_msat ~check:false ~store_proof:true
+let msat_check = mk_msat ~check:true ~store_proof:true
+let msat_no_proof = mk_msat ~check:false ~store_proof:false
 
 (* mc² *)
 let mc2 =
@@ -356,6 +360,7 @@ let solver_list = [
   S aez;
   S msat;
   S msat_no_proof;
+  S msat_check;
   S mc2;
   S (minisat false);
   S (ocaml_sat_solvers "minisat");
