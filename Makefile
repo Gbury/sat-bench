@@ -1,19 +1,17 @@
 # copyright (c) 2014, guillaume bury
 
-LOG=build.log
-COMP=ocamlbuild -log $(LOG) -use-ocamlfind
-FLAGS=
-BIN=main.native
+TIMEOUT ?= 30
 
 all: bin
 
 bin:
-	$(COMP) $(FLAGS) $(BIN)
+	@dune build --profile=release @all
+	@ln -sf _build/default/src/main.exe main.exe
 
 bench: bin
-	./$(BIN) problems/pigeon/hole{9,8,7,6}.cnf
+	./main.exe -t $(TIMEOUT) problems/pigeon/hole{6,7,8,9}.cnf
 
 clean:
-	$(COMP) -clean
+	@dune clean
 
 .PHONY: clean all bin test

@@ -6,17 +6,20 @@ exception Out_of_time
 exception Out_of_space
 exception Failure of string
 
-type status =
-  | Sat
-  | Unsat
-  | Memory
-  | Timeout
+module Status = struct
+  type t =
+    | Sat
+    | Unsat
+    | Memory
+    | Timeout
+end
+include Status
 
 type 'a sat = {
   name : string;
   package : string;
   pre : int list list -> 'a;
-  solve : 'a -> status;
+  solve : 'a -> Status.t;
 }
 
 type solver = S : _ sat -> solver
@@ -38,19 +41,27 @@ let map f l = List.rev @@ List.rev_map f l
 (* ************************************************************************ *)
 
 (* mSAT *)
-let msat =
-  let pre clauses = map (map Msat.Sat.Expr.make) clauses in
+let mk_msat ~check ~store_proof =
+  assert (not check || store_proof);
+  let module M = Msat_sat in
+  let pre clauses = map (map M.Int_lit.make) clauses in
   let solve clauses =
-    let module M = Msat.Sat.Make () in
-    let () = M.assume clauses in
-    match M.solve () with
+    let s = M.create ~store_proof ~size:`Big () in
+    let () = M.assume s clauses () in
+    match M.solve s with
     | M.Sat _ -> Sat
-    | M.Unsat _ -> Unsat
+    | M.Unsat us ->
+      if check then M.Proof.check @@ us.Msat.get_proof();
+      Unsat
   in {
-    name = "msat";
+    name = "msat" ^ (if check then "-check" else if store_proof then "" else "-no-proof");
     package = "mSAT";
     pre; solve;
   }
+
+let msat = mk_msat ~check:false ~store_proof:true
+let msat_check = mk_msat ~check:true ~store_proof:true
+let msat_no_proof = mk_msat ~check:false ~store_proof:false
 
 (* mc² *)
 let mc2 =
@@ -63,8 +74,8 @@ let mc2 =
   let solve (solver,clauses) =
     Solver.assume solver clauses;
     match Solver.solve solver with
-      | Solver.Sat _ -> Sat
-      | Solver.Unsat _ -> Unsat
+      | Solver.Sat _ -> Status.Sat
+      | Solver.Unsat _ -> Status.Unsat
   in {
     name = "mc2";
     package = "mc2.core, mc2.dimacs";
@@ -129,6 +140,7 @@ let minisat simpl =
     name; pre; solve;
   }
 
+(*
 (* sattools *)
 let sattools solver_name sattools_name =
   let pre clauses = clauses in
@@ -151,6 +163,7 @@ let sattools solver_name sattools_name =
     package = "sattools";
     pre; solve;
   }
+   *)
 
 (* ocaml-sat-solvers *)
 let ocaml_sat_solvers solver_name =
@@ -293,7 +306,7 @@ let pp_res ~full out l =
 exception Dummy
 
 module M = Map.Make(struct
-    type t = (status, unit) result
+    type t = (Status.t, unit) result
     let compare = compare
   end)
 
@@ -346,11 +359,15 @@ module P = Dolmen.Dimacs.Make
 let solver_list = [
   S aez;
   S msat;
+  S msat_no_proof;
+  S msat_check;
   S mc2;
   S (minisat false);
   S (ocaml_sat_solvers "minisat");
+(*
   S (sattools "minisat" "mini");
   S (sattools "cryptominisat" "crypto");
+*)
 ]
 
 let file_list = ref []
@@ -358,6 +375,8 @@ let name_list = ref []
 let package_list = ref []
 let aggregate = ref false
 let full_output = ref false
+let timeout = ref 600
+let memory = ref 1000
 
 let add_solver_name s = name_list := s :: !name_list
 let add_package_name s = package_list := s :: !package_list
@@ -367,12 +386,14 @@ let args = [
   "-s", Arg.String add_solver_name, " filter the solvers to use by name";
   "-p", Arg.String add_package_name, " filter the solvers to use by package";
   "-f", Arg.Set full_output, " output full exception information";
-]
+  "-t", Arg.Set_int timeout, " timeout (in seconds)";
+  "-m", Arg.Set_int memory, " timeout (in MB)";
+] |> Arg.align
 
 let anon file =
   file_list := file :: !file_list
 
-let usage = "./sat-bench [-s solver] file [file [file [...]]]"
+let usage = "./sat-bench [-s solver] file+"
 
 let rec filter_map f acc = function
   | [] -> List.rev acc
@@ -392,6 +413,8 @@ let () =
     Format.printf "ERROR: empty file list";
     exit 1
   end else begin
+    let timeout = float_of_int !timeout in
+    let memory = float_of_int !memory *. 1_000_000. in
     let solvers = List.filter (fun (S s) ->
         mem s.name !name_list && mem s.package !package_list
       ) solver_list in
@@ -400,9 +423,10 @@ let () =
         let l = P.parse_file file in
         Format.printf " solving..@\n@.";
         let input = filter_map (fun x -> x) [] l in
-        let res = List.map (call ~timeout:600. ~memory:1_000_000_000. input) solvers in
+        let res = List.map (call ~timeout ~memory input) solvers in
         pp_res ~full:!full_output stdout res;
-        file, res) !file_list
+        file, res)
+        (List.rev !file_list)
     in
     if !aggregate then
       Printf.printf "Aggregate (mean):\n%a" (pp_res ~full:!full_output) (mean l)

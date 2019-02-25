@@ -1,37 +1,28 @@
-opam-version: "1.2"
+opam-version: "2.0"
 name: "sat-bench"
 license: "todo"
 version: "dev"
+synopsis: "A small repo to test and benchmark different sat solvers"
 author: ["Guillaume Bury"]
 maintainer: ["Guillaume Bury"]
 build: [
-    [make "all"]
-]
-install: [
-]
-remove: [
+  ["dune" "build" "@all"]
 ]
 depends: [
-  "ocamlfind" {build}
-  "ocamlbuild" {build}
+  "dune" {build}
   "oclock"
   "dolmen"
   "printbox"
   "base-unix"
   "msat"
   "minisat"
-  "sattools"
-  "sattools-minisat"
-  "sattools-cryptominisat"
   "ocaml-sat-solvers"
   "aez"
   "mc2"
-]
-available: [
-  ocaml-version >= "4.03.0"
+  "ocaml" { >= "4.03" }
 ]
 tags: [ "sat" "bench" ]
 homepage: "https://github.com/gbury/sat-bench"
-dev-repo: "https://github.com/gbury/sat-bench.git"
+dev-repo: "git+https://github.com/gbury/sat-bench.git"
 bug-reports: "https://github.com/gbury/sat-bench/issues/"
 
